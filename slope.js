@@ -5,10 +5,11 @@ var margin = {
         left: 50
     },
     width = 400 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    height = 500 - margin.top - margin.bottom;
 
 var x = d3.time.scale().range([0, width]);
 var y = d3.scale.linear().range([height, 0]);
+var z = d3.scale.linear().range(["blue", "red"]).interpolate(d3.interpolateLab);
 
 var valueline = d3.svg.line()
     .x(function(d) { return x(d[0]); })
@@ -43,17 +44,21 @@ d3.csv('data.csv', function(error, data) {
         d.name = d.Name;
         d.date1 = +d.Date1;
         d.date2 = +d.Date2;
+        d.diff = d.date2 - d.date1;
     });
 
     var data_keys = Object.keys(data[0]);
 
     var conv_data = [];
+    var diff_data = [];
 
     for (var i = 0; i < data.length; i++) {
         data1 = [0, data[i].date1];
         data2 = [1, data[i].date2];
+        data3 = data[i].diff;
 
         conv_data.push([data1, data2]);
+        diff_data.push(data3);
     };
 
     x.domain([0, 1]);
@@ -62,6 +67,7 @@ d3.csv('data.csv', function(error, data) {
     }), d3.max(conv_data, function(d) {
         return Math.max(d[0][1], d[1][1]);
     })]);
+    z.domain([d3.min(diff_data), d3.max(diff_data)]);
 
     svg.append("g")
         .attr('class', "grid")
@@ -81,12 +87,12 @@ d3.csv('data.csv', function(error, data) {
                 return i;
             })
             .attr('d', valueline)
-            .style('stroke', "grey")
+            .style('stroke', z(diff_data[i]))
             .on('mouseover', function(d) {
                 d3.select(this)
                     .transition().duration(100)
-                    .style('stroke-width', '2px')
-                    .style('stroke', 'steelblue');
+                    .style('stroke-width', '3px')
+                    //.style('stroke', 'steelblue');
                 div.transition().duration(300)
                     .style('opacity', .8);
                 div.html(data[this.id].Name +
@@ -99,7 +105,7 @@ d3.csv('data.csv', function(error, data) {
                 d3.select(this)
                     .transition().delay(50).duration(100)
                     .style('stroke-width', '1.5px')
-                    .style('stroke', 'grey')
+                    //.style('stroke', 'grey')
                 div.transition().duration(300)
                     .style('opacity', 0);
             });
